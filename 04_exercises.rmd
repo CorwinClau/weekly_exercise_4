@@ -226,6 +226,42 @@ starbucks_with_2018_pop_est %>%
   * Connect all your locations together with a line in a meaningful way (you may need to order them differently in the original data).  
   
   * If there are other variables you want to add that could enhance your plot, do that now.  
+```{r}
+favorite_stp_by_Xia <- tibble(
+  place = c("Home", "Macalester College", "Spirit1919", 
+            "Long Museum", "Previous home", "Qinhan Noodle shop",
+            "Haidilao Hot pot", "Jianhui restaurant", "Girlfriend's University",
+            "My Middle School"),
+  long = c(108.89440, -93.1712321, 108.88881, 
+           121.56973, 108.9053, 108.8284, 
+           108.8742, 108.9463, 87.303,
+           108.9009),
+  lat = c(34.21168, 44.9378965, 34.20908,
+          31.21816, 34.2224, 34.2356, 
+          34.2113, 34.2140, 44.0178,
+          34.2282),
+  top_3 = c("Yes", "Yes", "No",
+            "No", "Yes", "No",
+            "No", "No", "No",
+            "No")
+  )
+
+pal <- colorFactor(palette = "viridis",
+                   domain = favorite_stp_by_Xia$top_3)
+
+leaflet(favorite_stp_by_Xia) %>%
+  addProviderTiles(providers$Stamen.Watercolor) %>%
+  addCircles(color = ~pal(top_3),
+             label = ~place) %>%
+  addPolylines(lng = ~long,
+               lat = ~lat,
+               color = col2hex("hotpink")) %>%
+  addLegend("bottomright",
+            pal = pal,
+            values = ~top_3,
+            title = "Top 3 places?")
+```
+  
   
 ## Revisiting old datasets
 
