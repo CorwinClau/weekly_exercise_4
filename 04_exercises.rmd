@@ -110,6 +110,7 @@ ggmap(world) +
   theme(legend.background = element_blank())
 ```
   
+  There are less Starbucks that are franchised and joint ventures; most of them are company owned or are licensed. Besides, Starbucks that are joint ventures seem only exist in Asia and Europe. 
 
   2. Construct a new map of Starbucks locations in the Twin Cities metro area (approximately the 5 county metro area).  
 ```{r}
@@ -130,7 +131,7 @@ ggmap(Twin_cities_metro) +
   
 
   3. In the Twin Cities plot, play with the zoom number. What does it do?  (just describe what it does - don't actually include more than one map).  
-  > With a smaller zoom number, there will be less detail information about roads shown in the plot.
+  With a smaller zoom number, there will be less detail information about roads shown in the plot.
 
   4. Try a couple different map types (see `get_stamenmap()` in help and look at `maptype`). Include a map with one of the other map types.  
 ```{r}
@@ -185,9 +186,34 @@ starbucks_with_2018_pop_est <-
   mutate(starbucks_per_10000 = (n/est_pop_2018)*10000)
 ```
 
-  6. **`dplyr` review**: Look through the code above and describe what each line of code does.
+  6. **`dplyr` review**: Look through the code above and describe what each line of code does.  
+  It first read a dataset from the dropbox, seperated the `state` variable into two new variables: `dot`, whose values are nothing, and `state`, which contains only the state names, and then selected only the new `state` variable. After that, by using the `mutate()` function, all state names are transformed to lower case. Finally, the transformed dataset is saved and named as `census_pop_est_2018`.  
+  Then a new dataset named `starbucks_with_2018_pop_est` is created by left joining `starbucks_us_by_state` with `census_pop_est_2018` just created, and a new variable is created that gives the number of Starbucks per 10,000 people.  
+  
+  7. Create a choropleth map that shows the number of Starbucks per 10,000 people on a map of the US. Use a new fill color, add points for all Starbucks in the US (except Hawaii and Alaska), add an informative title for the plot, and include a caption that says who created the plot (you!). Make a conclusion about what you observe.  
+```{r}
+US_map <- map_data("state")
 
-  7. Create a choropleth map that shows the number of Starbucks per 10,000 people on a map of the US. Use a new fill color, add points for all Starbucks in the US (except Hawaii and Alaska), add an informative title for the plot, and include a caption that says who created the plot (you!). Make a conclusion about what you observe.
+starbucks_with_2018_pop_est %>%
+  ggplot() +
+  geom_map(map = US_map,
+           aes(map_id = state_name, fill = starbucks_per_10000)) +
+  geom_point(data = Starbucks %>% filter(Country == "US", `State/Province` != "AK" & `State/Province` != "HI"),
+             aes(x = Longitude, y = Latitude),
+                 size = .25,
+                 alpha = .1,
+                 color = "goldenrod") +
+  expand_limits(x = US_map$long, y = US_map$lat) +
+  labs(title = "Number of Starbucks per 10,000 people in US",
+       subtitle = "With all Starbucks plotted as points",
+       fill = "",
+       caption = "Plotted by Xintan Xia") +
+  scale_fill_viridis_c(option = "magma") +
+  theme_map()
+```
+  
+  It's shown clearly that the for some states along the east coast, where numerous Starbucks cluster, the density of Starbucks per 10,000 people is actually quite low, about 0.5-0.75 Starbucks per 10,000 people. Starbucks also tend to cluster in California, and it's obvious seen from the plot that there are less number of Starbucks in Washington than in California, yet it's also clearly shown that the Starbucks density per 10,000 people in Washington is higher than that in California.  
+  In conclusion, the total number of Starbucks and the density of Starbucks per 10,000 people are two different stories.
 
 ### A few of your favorite things (`leaflet`)
 
