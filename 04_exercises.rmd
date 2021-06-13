@@ -380,11 +380,33 @@ These exercises use the datasets `MplsStops` and `MplsDemo` from the `carData` l
 
   14. Use the `MplsStops` dataset to find out how many stops there were for each neighborhood and the proportion of stops that were for a suspicious vehicle or person. Sort the results from most to least number of stops. Save this as a dataset called `mpls_suspicious` and display the table.  
 ```{r}
-MplsStops
+mpls_suspicious <- MplsStops %>%
+  mutate(is_suspicious = problem == "suspicious") %>%
+  group_by(neighborhood) %>%
+  summarize(num_stops = n(), prop_suspicious = sum(is_suspicious)/num_stops) %>%
+  arrange(desc(num_stops))
+
+mpls_suspicious
 ```
   
   
   15. Use a `leaflet` map and the `MplsStops` dataset to display each of the stops on a map as a small point. Color the points differently depending on whether they were for suspicious vehicle/person or a traffic stop (the `problem` variable). HINTS: use `addCircleMarkers`, set `stroke = FAlSE`, use `colorFactor()` to create a palette.  
+```{r}
+Mstops_pal <- colorFactor(palette = "viridis",
+                          domain = MplsStops$problem)
+
+leaflet(data = MplsStops) %>%
+  addTiles() %>%
+  addCircleMarkers(color = ~Mstops_pal(problem),
+                   stroke = FALSE,
+                   radius = 1.5,
+                   opacity = .1) %>%
+  addLegend(pal = Mstops_pal,
+            values = ~problem,
+            position = "bottomright",
+            title = "")
+```
+  
   
   16. Save the folder from moodle called Minneapolis_Neighborhoods into your project/repository folder for this assignment. Make sure the folder is called Minneapolis_Neighborhoods. Use the code below to read in the data and make sure to **delete the `eval=FALSE`**. Although it looks like it only links to the .sph file, you need the entire folder of files to create the `mpls_nbhd` data set. These data contain information about the geometries of the Minneapolis neighborhoods. Using the `mpls_nbhd` dataset as the base file, join the `mpls_suspicious` and `MplsDemo` datasets to it by neighborhood (careful, they are named different things in the different files). Call this new dataset `mpls_all`.
 
