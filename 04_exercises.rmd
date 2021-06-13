@@ -171,8 +171,7 @@ ggmap(Twin_cities_metro) +
 
 ### Choropleth maps with Starbucks data (`geom_map()`)
 
-The example I showed in the tutorial did not account for population of each state in the map. In the code below, a new variable is created, `starbucks_per_10000`, that gives the number of Starbucks per 10,000 people. It is in the `starbucks_with_2018_pop_est` dataset.
-
+The example I showed in the tutorial did not account for population of each state in the map. In the code below, a new variable is created, `starbucks_per_10000`, that gives the number of Starbucks per 10,000 people. It is in the `starbucks_with_2018_pop_est` dataset.  
 ```{r}
 census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2018_state_pop_est.csv?dl=1") %>% 
   separate(state, into = c("dot","state"), extra = "merge") %>% 
@@ -288,14 +287,34 @@ Stations<-read_csv("http://www.macalester.edu/~dshuman1/data/112/DC-Stations.csv
   9. Use the latitude and longitude variables in `Stations` to make a visualization of the total number of departures from each station in the `Trips` data. Use either color or size to show the variation in number of departures. This time, plot the points on top of a map. Use any of the mapping tools you'd like.
   
 ```{r}
+Trips1 <- Trips %>% 
+  select(sstation, client) %>% 
+  left_join(Stations %>% select(name:long),
+            by = c("sstation" = "name"))
 
+washdc_map <- get_stamenmap(bbox = c(left = -77.1323, bottom = 38.7889, right = -76.9319, top = 39.1236),
+                            maptype = "terrain",
+                            zoom = 11)
+
+ggmap(washdc_map) +
+  geom_point(data = Trips1,
+             aes(x = long, y = lat),
+             size = .1,
+             alpha = .1) +
+  theme_map()
+# Ask about this question why there aren't points around lat = 39.1
 ```
   
   10. Only 14.4% of the trips in our data are carried out by casual users. Create a plot that shows which area(s) have stations with a much higher percentage of departures by casual users. What patterns do you notice? Also plot this on top of a map. I think it will be more clear what the patterns are.
   
 ```{r}
-
-```
+ggmap(washdc_map) +
+  geom_point(data = Trips1,
+             aes(x = long, y = lat, color = client),
+             size = .2)
+```  
+  
+  Ask about the pattern.  
   
 ### COVID-19 data
 
@@ -303,15 +322,67 @@ The following exercises will use the COVID-19 data from the NYT.
 
   11. Create a map that colors the states by the most recent cumulative number of COVID-19 cases (remember, these data report cumulative numbers so you don't need to compute that). Describe what you see. What is the problem with this map?
   
-  12. Now add the population of each state to the dataset and color the states by most recent cumulative cases/10,000 people. See the code for doing this with the Starbucks data. You will need to make some modifications. 
+```{r}
+covid_most_recent <- covid19 %>%
+  filter(date == max(date)) %>%
+  mutate(state = str_to_lower(state))
+
+states_map <- map_data("state")
+
+covid_most_recent %>%
+  ggplot() +
+  geom_map(map = states_map,
+           aes(map_id = state, fill = cases)) +
+  scale_fill_viridis_c(option = "viridis") +
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  labs(title = "Most recent cumulative COVID-19 case count in US",
+       fill = "Case Count") +
+  theme_map()
+```
   
-  13. **CHALLENGE** Choose 4 dates spread over the time period of the data and create the same map as in exercise 12 for each of the dates. Display the four graphs together using faceting. What do you notice?
+  The plot implies that all other states are currently in almost the same level, except California, Texas, Florida, Illinois, and New York, in which Texas and California have the largest number of cumulative case count currently.  
+  The question is that this graph can't give people a clear comparison between the conditions of the majority of states, which may be caused by the continuous color scale with quite a large interval between each scales. The fact that this plot doesn't take density into consideration also attributes to the problem. Right now, the total case counts are plotted with respect to state area, but the pure cumulative case counts are not that much informative, under this circumstance, and large areas can be misleading as well. In reflecting the seriousness of current conditions, we should consider the density.
+  
+  12. Now add the population of each state to the dataset and color the states by most recent cumulative cases/10,000 people. See the code for doing this with the Starbucks data. You will need to make some modifications.  
+```{r}
+census_pop_est_2021 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2021_state_pop_est.csv?dl=1") %>% 
+  separate(state, into = c("dot","state"), extra = "merge") %>% 
+  select(-dot) %>% 
+  mutate(state = str_to_lower(state))
+
+covid_most_recent %>%
+  left_join(census_pop_est_2021,
+            by = "state") %>%
+  mutate(cases_per_10000 = (cases/est_pop_2021)*10000) %>%
+  ggplot() +
+  geom_map(map = states_map,
+           aes(map_id = state, fill = cases_per_10000)) +
+  scale_fill_viridis_c(option = "viridis") +
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  labs(title = "Most recent COVID-19 case counts in US",
+       subtitle = "Cumulative case counts per 10,000 people",
+       fill = "") +
+  theme_map()
+# Ask how to get the population of 2021; changing 2018 to 2021 doesn't do anything.
+```
+  
+  
+  13. **CHALLENGE** Choose 4 dates spread over the time period of the data and create the same map as in exercise 12 for each of the dates. Display the four graphs together using faceting. What do you notice?  
+```{r}
+
+```
+  
+  I chose 
   
 ## Minneapolis police stops
 
 These exercises use the datasets `MplsStops` and `MplsDemo` from the `carData` library. Search for them in Help to find out more information.
 
   14. Use the `MplsStops` dataset to find out how many stops there were for each neighborhood and the proportion of stops that were for a suspicious vehicle or person. Sort the results from most to least number of stops. Save this as a dataset called `mpls_suspicious` and display the table.  
+```{r}
+MplsStops
+```
+  
   
   15. Use a `leaflet` map and the `MplsStops` dataset to display each of the stops on a map as a small point. Color the points differently depending on whether they were for suspicious vehicle/person or a traffic stop (the `problem` variable). HINTS: use `addCircleMarkers`, set `stroke = FAlSE`, use `colorFactor()` to create a palette.  
   
