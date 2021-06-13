@@ -410,18 +410,47 @@ leaflet(data = MplsStops) %>%
   
   16. Save the folder from moodle called Minneapolis_Neighborhoods into your project/repository folder for this assignment. Make sure the folder is called Minneapolis_Neighborhoods. Use the code below to read in the data and make sure to **delete the `eval=FALSE`**. Although it looks like it only links to the .sph file, you need the entire folder of files to create the `mpls_nbhd` data set. These data contain information about the geometries of the Minneapolis neighborhoods. Using the `mpls_nbhd` dataset as the base file, join the `mpls_suspicious` and `MplsDemo` datasets to it by neighborhood (careful, they are named different things in the different files). Call this new dataset `mpls_all`.
 
-```{r, eval=FALSE}
+```{r}
 mpls_nbhd <- st_read("Minneapolis_Neighborhoods/Minneapolis_Neighborhoods.shp", quiet = TRUE)
+
+mpls_all <- mpls_nbhd %>% 
+  left_join(mpls_suspicious,
+            by = c("BDNAME" = "neighborhood")) %>%
+  left_join(MplsDemo,
+                by = c("BDNAME" = "neighborhood"))
 ```
 
-  17. Use `leaflet` to create a map from the `mpls_all` data  that colors the neighborhoods by `prop_suspicious`. Display the neighborhood name as you scroll over it. Describe what you observe in the map.
+  17. Use `leaflet` to create a map from the `mpls_all` data  that colors the neighborhoods by `prop_suspicious`. Display the neighborhood name as you scroll over it. Describe what you observe in the map.  
+```{r}
+mplsall_pal = colorNumeric(palette = "inferno",
+                           domain = mpls_all$prop_suspicious)
+
+leaflet(data = mpls_all) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE,
+              fillColor = ~mplsall_pal(prop_suspicious),
+              label = ~BDNAME,
+              fillOpacity = .7) %>%
+  addLegend(position = "bottomright",
+            pal = mplsall_pal,
+            values = ~prop_suspicious)
+
+# Ask about the title of the legend
+```
+  The proportion varies much across neighborhoods, and the distinction between neighborhoods with different proportions is quite clear. The general trend is that neighborhoods with a high proportions of stops that were for a suspicious vehicle or person seem to cluster in the south, while those with low proportions are mostly in the north. Yet there are also some neighborhoods in the south with a low proportion, such as Tangletown, Kenwood, etc. 
   
-  18. Use `leaflet` to create a map of your own choosing. Come up with a question you want to try to answer and use the map to help answer that question. Describe what your map shows. 
+  
+  18. Use `leaflet` to create a map of your own choosing. Come up with a question you want to try to answer and use the map to help answer that question. Describe what your map shows.  
+```{r}
+
+```
+  
   
   
 ## GitHub link
 
-  19. Below, provide a link to your GitHub page with this set of Weekly Exercises. Specifically, if the name of the file is 04_exercises.Rmd, provide a link to the 04_exercises.md file, which is the one that will be most readable on GitHub.
+  19. Below, provide a link to your GitHub page with this set of Weekly Exercises. Specifically, if the name of the file is 04_exercises.Rmd, provide a link to the 04_exercises.md file, which is the one that will be most readable on GitHub.  
+  Here's the [link](https://github.com/CorwinClau/weekly_exercise_4/blob/main/04_exercises.md).
 
 
 **DID YOU REMEMBER TO UNCOMMENT THE OPTIONS AT THE TOP?**
